@@ -1,0 +1,37 @@
+---
+- name: Add management users
+  hosts: all
+  gather_facts: false
+  vars:
+    mgmt_ssh_key: "{{ lookup('file', 'id_rsa') }}"
+
+  tasks:
+    - name: Install sudo
+      apt:
+        name: sudo
+        state: present
+
+    - name: Add mgmt user
+      user:
+        name: mgmt
+        comment: management user
+        groups: sudo
+        state: present
+
+    - name: Add ssh key for mgmt user
+      authorized_key:
+        user: mgmt
+        key: "{{ mgmt_ssh_key }}"
+        comment: mgmt
+        state: present
+
+    - name: Add passwordless sudo config
+      copy:
+        content: "mgmt ALL=(ALL) NOPASSWD:ALL"        
+        dest: "/etc/sudoers.d/mgmt"
+        owner: root
+        group: root
+        mode: 0400
+
+    - name: Disable root password
+      command: passwd -l root 

@@ -1,0 +1,60 @@
+---
+- name: Download and run node_exporter
+  hosts: all
+  gather_facts: false
+  
+  tasks:
+    - name: Get github releases
+      uri:
+        url: https://api.github.com/repos/prometheus/node_exporter/releases/latest
+        return_content: true
+      register: _node_exporter_releases
+      check_mode: false
+
+    - name: Get latest version
+      set_fact:
+        _node_exporter_latest_version: "{{ _node_exporter_releases.json.tag_name | replace('v','') }}" 
+        _node_exporter_download_url: "{{ _node_exporter_releases.json.assets | map(attribute='browser_download_url') | select('match', '.*linux-amd64.*') | first }}"
+
+    - name: Download node_exporter release
+      get_url:
+        url: "{{ _node_exporter_download_url }}"
+        dest: /tmp/node_exporter.tar.gz
+
+    - name: Unarchive node_exporter release
+      unarchive:
+        src: /tmp/node_exporter.tar.gz
+        dest: /tmp/
+        remote_src: true
+        creates: /tmp/node_exporter-{{ _node_exporter_latest_version }}.linux-amd64
+      
+    - name: Copy executable
+      copy:
+        src: /tmp/node_exporter-{{ _node_exporter_latest_version }}.linux-amd64/node_exporter
+        dest: /usr/local/bin/node_exporter
+        remote_src: true
+        owner: root
+        group: root
+        mode: 0755
+    
+    - name: Remove node_exporter files
+      shell: rm -rf /tmp/node_exporter*
+
+    - name: Add /etc/systemd/system/node_exporter.service file
+      template:
+        src: node_exporter.service.j2
+        dest: /etc/systemd/system/node_exporter.service
+        owner: root
+        group: root
+        mode: 0644
+      register: _node_exporter_systemd
+    
+    - name: Start node_exporter service
+      systemd:
+        name: node_exporter
+        state: started
+      
+    - name: Check if service is running
+      command: >
+        /bin/systemctl is-active node_exporter
+      changed_when: false

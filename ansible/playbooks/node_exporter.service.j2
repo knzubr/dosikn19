@@ -1,0 +1,13 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Node statistics exporter
+
+[Service]
+Restart=always
+User=root
+ExecStart=/usr/local/bin/node_exporter
+StandardOutput=null
+
+[Install]
+WantedBy=multi-user.agent
+Alias=node_exporter.service
