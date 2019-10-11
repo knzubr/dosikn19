@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'node_monitoring'
+    scrape_interval: 1s
+    static_configs:
+      - targets:
+        - 'middlebox.zubr:9100'
+        - 'containerbox.zubr:9100'
+        - 'httpproxybox.zubr:9100'
+        - 'videoservbox.zubr:9100'
