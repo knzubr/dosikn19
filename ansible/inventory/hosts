@@ -1,0 +1,5 @@
+[all]
+middlebox.zubr ansible_user=root
+containerbox.zubr ansible_user=root
+httpproxybox.zubr ansible_user=root
+videoservbox.zubr ansible_user=root
